@@ -28,6 +28,7 @@ if (!defined("BASEPATH"))
     exit("No direct script access allowed");
 
 class HMVC_Router extends CI_Router {
+    
     /**
      * Current module name
      *
@@ -66,6 +67,31 @@ class HMVC_Router extends CI_Router {
         show_404($segments[0]);
     }
     
+    /**
+     * Parse Routes
+     *
+     * This function matches any routes that may exist in
+     * the config/routes.php file against the URI to
+     * determine if the class/method need to be remapped.
+     *
+     * @access	private
+     * @return	void
+     */
+    function _parse_routes() {
+        $module = $this->uri->segment(0);
+        
+        // Apply the current module's routing config
+        if ($module && is_file(APPPATH . 'modules/' . $module . '/config/routes.php')) {
+            include (APPPATH . 'modules/' . $module . '/config/routes.php');
+            
+            $route = (!isset($route) or !is_array($route)) ? array() : $route;
+            $this->routes = array_merge($this->routes, $route);
+            unset($route);
+        }
+        
+        // Let parent do the heavy routing
+        return parent::_parse_routes();
+    }
     
     /**
      * The logic of locating a controller is grouped in this function
@@ -93,6 +119,12 @@ class HMVC_Router extends CI_Router {
                 
                 // Module sub-directory controller?
                 if (is_file($source . $directory . '.php')) {
+                    return array_slice($segments, 1);
+                }
+                
+                // Module sub-directory  default controller?
+                if (is_file($source . $this->default_controller . '.php')) {
+                    $segments[1] = $this->default_controller;
                     return array_slice($segments, 1);
                 }
                 
