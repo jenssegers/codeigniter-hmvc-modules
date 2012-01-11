@@ -5,6 +5,9 @@
  * @link		http://www.jenssegers.be
  * @license		MIT License Copyright (c) 2011 Jens Segers
  * 
+ * Inspired by wiredesignz's HMVC Router.
+ * https://bitbucket.org/wiredesignz/codeigniter-modular-extensions-hmvc/
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
