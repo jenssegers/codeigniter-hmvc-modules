@@ -38,6 +38,14 @@ class HMVC_Loader extends CI_Loader {
     protected $_ci_modules = array();
     
     /**
+     * List of loaded controllers
+     *
+     * @var array
+     * @access protected
+     */
+    protected $_ci_controllers = array();
+     
+    /**
      * Constructor
      *
      * Add the current module to all paths permanently
@@ -358,41 +366,42 @@ class HMVC_Loader extends CI_Loader {
      */
     private function _load_controller($uri = '', $params = array()) {
         $router = & $this->_ci_get_component('router');
-        list($class, $method) = $router->locate(explode('/', $uri));
+        $segments = $router->locate(explode('/', $uri));
         
-        // Default method
-        if(!isset($method)) {
-            $method = "index";
-        }
+        $class = isset($segments[0]) ? $segments[0] : FALSE;
         
         // Controller not found
-        if(!isset($class)) {
+        if (!$class) {
             return;
         }
         
-        // Determine filepath
-        if ($router->module) {
-            $filepath = APPPATH . 'controllers/' . $router->fetch_directory() . $class . '.php';
-        }
-        else {
-            $filepath = APPPATH. 'controllers/' . $class . '.php';
-        }
+        // Default method if no method is found
+        $method = isset($segments[1]) ? $segments[1] : "index";
         
-        // Load the controller file
-        if (file_exists($filepath)) {
-            include_once ($filepath);
+        if(!array_key_exists(strtolower($class), $this->_ci_controllers)) {
+            // Determine filepath
+            if ($router->module) {
+                $filepath = APPPATH . 'controllers/' . $router->fetch_directory() . $class . '.php';
+            } else {
+                $filepath = APPPATH . 'controllers/' . $class . '.php';
+            }
+            
+            // Load the controller file
+            if (file_exists($filepath)) {
+                include_once ($filepath);
+            }
+            
+            $name = ucfirst($class);
+            $class = strtolower($class);
+            
+            if (!class_exists($class)) {
+                log_message('error', "Non-existent class: " . $name);
+                show_error("Non-existent class: " . $class);
+            }
+            
+            // Create a controller object
+            $this->_ci_controllers[$class] = new $name();
         }
-        
-        $name = ucfirst($class);
-        $class = strtolower($class);
-        
-        if (!class_exists($class)) {
-            log_message('error', "Non-existent class: " . $name);
-            show_error("Non-existent class: " . $class);
-        }
-        
-        // Create a controller object
-        $this->_ci_controllers[$class] = new $name();
         
         $controller = $this->_ci_controllers[$class];
         
@@ -403,7 +412,7 @@ class HMVC_Loader extends CI_Loader {
             $buffer = ob_get_clean();
             return ($output !== NULL) ? $output : $buffer;
         } else {
-            log_message('error', "Non-existent class method: " . $name . "/" . $method);
+            log_message('error', "Non-existent class method: " . $class . "/" . $method);
             show_error("Non-existent class method: " . $class . "/" . $method);
         }
     }
