@@ -319,7 +319,6 @@ class HMVC_Loader extends CI_Loader {
      * @return	void
      */
     public function add_module($module, $view_cascade = TRUE) {
-        
         // Mark module as loaded
         array_unshift($this->_ci_modules, $module);
         
@@ -366,6 +365,12 @@ class HMVC_Loader extends CI_Loader {
      */
     private function _load_controller($uri = '', $params = array()) {
         $router = & $this->_ci_get_component('router');
+        
+        // Back up current router values
+        $directory = $router->directory;
+        $module = $router->module;
+        
+        // Locate the controller
         $segments = $router->locate(explode('/', $uri));
         
         $class = isset($segments[0]) ? $segments[0] : FALSE;
@@ -405,16 +410,23 @@ class HMVC_Loader extends CI_Loader {
         
         $controller = $this->_ci_controllers[$class];
         
-        if (method_exists($controller, $method)) {
-            // Capture output and return
-            ob_start();
-            $output = call_user_func_array(array($controller, $method), $params);
-            $buffer = ob_get_clean();
-            return ($output !== NULL) ? $output : $buffer;
-        } else {
+        // Method does not exists
+        if (!method_exists($controller, $method)) {
             log_message('error', "Non-existent class method: " . $class . "/" . $method);
             show_error("Non-existent class method: " . $class . "/" . $method);
         }
+        
+        // Capture output and return
+        ob_start();
+        $output = call_user_func_array(array($controller, $method), $params);
+        $buffer = ob_get_clean();
+        
+        // Restore router state
+        $router->directory = $directory;
+        $router->module = $module;
+        
+        // Return output
+        return ($output !== NULL) ? $output : $buffer;
     }
     
     /**
@@ -431,8 +443,6 @@ class HMVC_Loader extends CI_Loader {
             
             if (is_dir(APPPATH . 'modules/' . $module)) {
                 return array($module, $class);
-            } else {
-                return FALSE;
             }
         }
         return FALSE;

@@ -41,6 +41,32 @@ class HMVC_Router extends CI_Router {
     var $module = '';
     
     /**
+     * Constructor
+     *
+     * Runs the route mapping function.
+     */
+    function __construct() {
+        parent::__construct();
+        
+        // Process 'modules_location' from config
+        $modules_location = $this->config->item("modules_location");
+        if (!$modules_location) {
+            // Default modules location if not set
+            $modules_location = APPPATH . "modules/";
+        }
+        
+        $modules_location = rtrim($modules_location, '/') . '/';
+        if (!stristr($modules_location, FCPATH))
+            $modules_location = str_replace('\\', '/', FCPATH . $modules_location);
+        $this->config->set_item("modules_location", $modules_location);
+        
+        // Make path relative to controllers directory
+        $modules_relative = str_replace(str_replace('\\', '/', FCPATH . APPPATH), '../', $modules_location);
+        $modules_relative = str_replace(str_replace('\\', '/', FCPATH), '../../', $modules_relative);
+        $this->config->set_item("modules_location_relative", $modules_relative);
+    }
+    
+    /**
      * Validates the supplied segments.  Attempts to determine the path to
      * the controller.
      *
@@ -84,8 +110,8 @@ class HMVC_Router extends CI_Router {
         $module = $this->uri->segment(0);
         
         // Apply the current module's routing config
-        if ($module && is_file(APPPATH . 'modules/' . $module . '/config/routes.php')) {
-            include (APPPATH . 'modules/' . $module . '/config/routes.php');
+        if ($module && is_file($this->config->item("modules_location") . $module . '/config/routes.php')) {
+            include ($this->config->item("modules_location") . $module . '/config/routes.php');
             
             $route = (!isset($route) or !is_array($route)) ? array() : $route;
             $this->routes = array_merge($this->routes, $route);
@@ -105,7 +131,7 @@ class HMVC_Router extends CI_Router {
     function locate($segments) {
         list($module, $directory, $controller) = array_pad($segments, 3, NULL);
         
-       // Root folder controller?
+        // Root folder controller?
         if (is_file(APPPATH . 'controllers/' . $module . '.php')) {
             return $segments;
         }
@@ -123,9 +149,9 @@ class HMVC_Router extends CI_Router {
         }
         
         // Does a module exist? (/modules/xyz/controllers/)
-        if (is_dir($source = APPPATH . 'modules/' . $module . '/controllers/')) {
+        if (is_dir($source = $this->config->item("modules_location") . $module . '/controllers/')) {
             $this->module = $module;
-            $this->directory = '../modules/' . $module . '/controllers/';
+            $this->directory = $this->config->item("modules_location_relative") . $module . '/controllers/';
             
             // Module root controller?
             if ($directory && is_file($source . $directory . '.php')) {
