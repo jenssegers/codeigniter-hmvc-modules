@@ -8,6 +8,22 @@ Installation
 
 Download the file from github and pace them into their corresponding folders in the application directory.
 
+_Note: to use the HMVC functionality, make sure the Controller and Router you use extend their HMVC class._
+
+Next, add the location of your modules directory to the main config.php file:
+
+	/*
+	|--------------------------------------------------------------------------
+	| Modules location
+	|--------------------------------------------------------------------------
+	|
+	| This is the folder where your modules are located. You may define an
+	| absolute path to the location or a relative path starting from the root
+	| directory.
+	|
+	*/
+	$config['modules_location'] = APPPATH . "modules/";
+
 Functionallity
 -------------
 
@@ -31,7 +47,10 @@ From within a module you can load its own resources just like you always do. If 
 			$this->load->model("local_model");
 			
 			// load a model from another module
-			$this->load->model("other_module/remote_model");
+			$this->load->model("other_module/model");
+
+			// HMVC example
+			$this->load->controller("module/controller/method");
 		}
 	}
 	
@@ -42,3 +61,7 @@ Because of the modified router, the module's controllers are accessible like a d
 	/module/hello -> /module/controllers/hello/(default_controller).php (hello method)
 	/module/hello -> /module/controllers/module.php (hello method)
 	/module/hello -> /module/controllers/(default_controller).php (hello method)
+	
+If the requested module contains a routes.php config file it will automatically be added to the main routes.
+
+To load hierarchical controllers you use the $this->load->controller() method. The argument should be a URI string pointing to the right controller (and method). This function uses the same locating technique as explained above.
