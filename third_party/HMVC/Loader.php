@@ -80,28 +80,18 @@ class HMVC_Loader extends CI_Loader {
      * @return	void
      */
     public function controller($uri) {
-        $params = array_slice(func_get_args(), 1);
-        
-        // Detect module
-        if (list($module, $uri2) = $this->detect_module($uri)) {
-            // Module already loaded
-            if (in_array($module, $this->_ci_modules)) {
-                $this->_load_controller($uri2, $params);
+        // No valid module detected, add current module to uri
+        list($module) = $this->detect_module($uri);
+        if (!isset($module)) {
+            $router = & $this->_ci_get_component('router');
+            if ($router->module) {
+                $module = $router->module;
+                $uri = $module . "/" . $uri;
             }
-            
-            // Add module
-            $this->add_module($module);
-            
-            // Load controller
-            $void = $this->_load_controller($uri2, $params);
-            
-            // Remove module
-            $this->remove_module();
-            
-            return $void;
-        } else {
-            return $this->_load_controller($uri, $params);
         }
+        
+        $params = func_get_args();
+        return $this->_load_controller($uri, array_slice($params, 1));
     }
     
     /**
@@ -398,41 +388,48 @@ class HMVC_Loader extends CI_Loader {
      * @param	array
      * @return	object
      */
-    private function _load_controller($class = '', $params = array()) {
-        $method = "index";
+    private function _load_controller($uri = '', $params = array()) {
+        $router = & $this->_ci_get_component('router');
+        list($class, $method) = $router->locate(explode('/', $uri));
         
-        if (($first_slash = strpos($class, '/')) !== FALSE) {
-            $method = substr($class, $first_slash + 1);
-            $class = substr($class, 0, $first_slash);
+        // Default method
+        if(!isset($method)) {
+            $method = "index";
         }
         
-        if (!array_key_exists(strtolower($class), $this->_ci_controllers)) {
-            // Check controller folders for matching controller file
-            foreach ($this->_ci_controller_paths as $path) {
-                $filepath = $path . 'controllers/' . $class . '.php';
-                
-                if (file_exists($filepath)) {
-                    // Load the controller file
-                    include_once ($filepath);
-                    break;
-                }
-            }
-            
-            $name = ucfirst($class);
-            $class = strtolower($class);
-            
-            if (!class_exists($class)) {
-                log_message('error', "Non-existent class: " . $name);
-                show_error("Non-existent class: " . $class);
-            }
-            
-            // Create a controller object
-            $this->_ci_controllers[$class] = new $name();
+        // Controller not found
+        if(!isset($class)) {
+            return;
         }
+        
+        // Determine filepath
+        if ($router->module) {
+            $filepath = APPPATH . 'controllers/' . $router->fetch_directory() . $class . '.php';
+        }
+        else {
+            $filepath = APPPATH. 'controllers/' . $class . '.php';
+        }
+        
+        // Load the controller file
+        if (file_exists($filepath)) {
+            include_once ($filepath);
+        }
+        
+        $name = ucfirst($class);
+        $class = strtolower($class);
+        
+        if (!class_exists($class)) {
+            log_message('error', "Non-existent class: " . $name);
+            show_error("Non-existent class: " . $class);
+        }
+        
+        // Create a controller object
+        $this->_ci_controllers[$class] = new $name();
         
         $controller = $this->_ci_controllers[$class];
         
         if (method_exists($controller, $method)) {
+            // Capture output and return
             ob_start();
             $output = call_user_func_array(array($controller, $method), $params);
             $buffer = ob_get_clean();
