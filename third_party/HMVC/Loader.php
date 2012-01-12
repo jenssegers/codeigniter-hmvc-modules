@@ -30,7 +30,23 @@ if (!defined("BASEPATH"))
 class HMVC_Loader extends CI_Loader {
     
     /**
-     * List of loaded models
+     * List of paths to load controllers from
+     *
+     * @var array
+     * @access protected
+     */
+    protected $_ci_controller_paths = array();
+    
+    /**
+     * List of loaded controllers
+     *
+     * @var array
+     * @access protected
+     */
+    protected $_ci_controllers = array();
+    
+    /**
+     * List of loaded modules
      *
      * @var array
      * @access protected
@@ -45,10 +61,46 @@ class HMVC_Loader extends CI_Loader {
     public function __construct() {
         parent::__construct();
         
+        // Add default controller path
+        $this->_ci_controller_paths = array(APPPATH);
+        
         // Get current module from the router
         $router = & $this->_ci_get_component('router');
         if ($router->module) {
             $this->add_module($router->module);
+        }
+    }
+    
+    /**
+     * Controller Loader
+     *
+     * This function lets users load and hierarchical controllers to enable HMVC support
+     *
+     * @param	string	the uri to the controller
+     * @return	void
+     */
+    public function controller($uri) {
+        $params = array_slice(func_get_args(), 1);
+        
+        // Detect module
+        if (list($module, $uri2) = $this->detect_module($uri)) {
+            // Module already loaded
+            if (in_array($module, $this->_ci_modules)) {
+                $this->_load_controller($uri2, $params);
+            }
+            
+            // Add module
+            $this->add_module($module);
+            
+            // Load controller
+            $void = $this->_load_controller($uri2, $params);
+            
+            // Remove module
+            $this->remove_module();
+            
+            return $void;
+        } else {
+            return $this->_load_controller($uri, $params);
         }
     }
     
@@ -288,11 +340,16 @@ class HMVC_Loader extends CI_Loader {
      * @return	void
      */
     public function add_module($module, $view_cascade = TRUE) {
+        
         // Mark module as loaded
         array_unshift($this->_ci_modules, $module);
         
-        // Add package path
         $path = APPPATH . 'modules/' . rtrim($module, '/') . '/';
+        
+        // Add controller path
+        array_unshift($this->_ci_controller_paths, $path);
+        
+        // Add package path
         return parent::add_package_path($path, $view_cascade);
     }
     
@@ -309,16 +366,77 @@ class HMVC_Loader extends CI_Loader {
         if ($module == '') {
             // Mark module as not loaded
             array_shift($this->_ci_modules);
-
+            
+            // Remove controller path
+            array_shift($this->_ci_controller_paths);
+            
             // Remove package path
             return parent::remove_package_path('', $remove_config);
         } else if (($key = array_search($module, $this->_ci_modules)) !== FALSE) {
             // Mark module as not loaded
             unset($this->_ci_modules[$key]);
             
+            $path = APPPATH . 'modules/' . rtrim($module, '/') . '/';
+            
+            // Remove controller path
+            if (($key = array_search($path, $this->_ci_controller_paths)) !== FALSE) {
+                unset($this->_ci_controller_paths[$key]);
+            }
+            
             // Remove package path
             $path = APPPATH . 'modules/' . rtrim($module, '/') . '/';
             return parent::remove_package_path($path, $remove_config);
+        }
+    }
+    
+    /**
+	 * Controller loader
+	 *
+	 * This function is used to load and instantiate controllers
+	 *
+	 * @param	string
+	 * @param	array
+	 * @return	object
+	 */
+    private function _load_controller($class = '', $params = array()) {
+        $method = "index";
+        
+        if (($first_slash = strpos($class, '/')) !== FALSE) {
+            $class = substr($class, 0, $first_slash);
+            $method = substr($class, $first_slash + 1);
+        }
+        
+        if (!array_key_exists(strtolower($class), $this->_ci_controllers)) {
+            // Check controller folders for matching controller file
+            foreach ($this->_ci_controller_paths as $path) {
+                $filepath = $path . 'controllers/' . $class . '.php';
+                
+                if (file_exists($filepath)) {
+                    // Load the controller file
+                    include_once ($filepath);
+                    break;
+                }
+            }
+            
+            $name = ucfirst($class);
+            $class = strtolower($class);
+            
+            if (!class_exists($class)) {
+                log_message('error', "Non-existent class: " . $name);
+                show_error("Non-existent class: " . $class);
+            }
+            
+            // Create a controller object
+            $this->_ci_controllers[$class] = new $name();
+        }
+        
+        $controller = $this->_ci_controllers[$class];
+        
+        if (method_exists($controller, $method)) {
+            ob_start();
+            $output = call_user_func_array(array($controller, $method), $params);
+            $buffer = ob_get_clean();
+            return ($output !== NULL) ? $output : $buffer;
         }
     }
     
