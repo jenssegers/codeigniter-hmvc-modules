@@ -30,22 +30,6 @@ if (!defined("BASEPATH"))
 class HMVC_Loader extends CI_Loader {
     
     /**
-     * List of paths to load controllers from
-     *
-     * @var array
-     * @access protected
-     */
-    protected $_ci_controller_paths = array();
-    
-    /**
-     * List of loaded controllers
-     *
-     * @var array
-     * @access protected
-     */
-    protected $_ci_controllers = array();
-    
-    /**
      * List of loaded modules
      *
      * @var array
@@ -60,9 +44,6 @@ class HMVC_Loader extends CI_Loader {
      */
     public function __construct() {
         parent::__construct();
-        
-        // Add default controller path
-        $this->_ci_controller_paths = array(APPPATH);
         
         // Get current module from the router
         $router = & $this->_ci_get_component('router');
@@ -336,9 +317,6 @@ class HMVC_Loader extends CI_Loader {
         
         $path = APPPATH . 'modules/' . rtrim($module, '/') . '/';
         
-        // Add controller path
-        array_unshift($this->_ci_controller_paths, $path);
-        
         // Add package path
         return parent::add_package_path($path, $view_cascade);
     }
@@ -357,21 +335,11 @@ class HMVC_Loader extends CI_Loader {
             // Mark module as not loaded
             array_shift($this->_ci_modules);
             
-            // Remove controller path
-            array_shift($this->_ci_controller_paths);
-            
             // Remove package path
             return parent::remove_package_path('', $remove_config);
         } else if (($key = array_search($module, $this->_ci_modules)) !== FALSE) {
             // Mark module as not loaded
             unset($this->_ci_modules[$key]);
-            
-            $path = APPPATH . 'modules/' . rtrim($module, '/') . '/';
-            
-            // Remove controller path
-            if (($key = array_search($path, $this->_ci_controller_paths)) !== FALSE) {
-                unset($this->_ci_controller_paths[$key]);
-            }
             
             // Remove package path
             $path = APPPATH . 'modules/' . rtrim($module, '/') . '/';
