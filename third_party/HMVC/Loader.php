@@ -390,20 +390,20 @@ class HMVC_Loader extends CI_Loader {
     }
     
     /**
-	 * Controller loader
-	 *
-	 * This function is used to load and instantiate controllers
-	 *
-	 * @param	string
-	 * @param	array
-	 * @return	object
-	 */
+     * Controller loader
+     *
+     * This function is used to load and instantiate controllers
+     *
+     * @param	string
+     * @param	array
+     * @return	object
+     */
     private function _load_controller($class = '', $params = array()) {
         $method = "index";
         
         if (($first_slash = strpos($class, '/')) !== FALSE) {
-            $class = substr($class, 0, $first_slash);
             $method = substr($class, $first_slash + 1);
+            $class = substr($class, 0, $first_slash);
         }
         
         if (!array_key_exists(strtolower($class), $this->_ci_controllers)) {
@@ -437,6 +437,9 @@ class HMVC_Loader extends CI_Loader {
             $output = call_user_func_array(array($controller, $method), $params);
             $buffer = ob_get_clean();
             return ($output !== NULL) ? $output : $buffer;
+        } else {
+            log_message('error', "Non-existent class method: " . $name . "/" . $method);
+            show_error("Non-existent class method: " . $class . "/" . $method);
         }
     }
     
