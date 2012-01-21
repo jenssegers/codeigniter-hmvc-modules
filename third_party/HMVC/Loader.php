@@ -334,7 +334,6 @@ class HMVC_Loader extends CI_Loader {
      *
      * @param	type
      * @param 	bool
-     * @return	type
      */
     public function remove_module($module = '', $remove_config = TRUE) {
         if ($module == '') {
@@ -342,14 +341,14 @@ class HMVC_Loader extends CI_Loader {
             array_shift($this->_ci_modules);
             
             // Remove package path
-            return parent::remove_package_path('', $remove_config);
+            parent::remove_package_path('', $remove_config);
         } else if (($key = array_search($module, $this->_ci_modules)) !== FALSE) {
             if($path = $this->find_module($module)) {
                 // Mark module as not loaded
                 unset($this->_ci_modules[$key]);
                 
                 // Remove package path
-                return parent::remove_package_path($path, $remove_config);
+                parent::remove_package_path($path, $remove_config);
             }
         }
     }
