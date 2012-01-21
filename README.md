@@ -14,15 +14,15 @@ Next, add the location of your modules directory to the main config.php file:
 
 	/*
 	|--------------------------------------------------------------------------
-	| Modules location
+	| Modules locations
 	|--------------------------------------------------------------------------
 	|
-	| This is the folder where your modules are located. You may define an
+	| These are the folders where your modules are located. You may define an
 	| absolute path to the location or a relative path starting from the root
 	| directory.
 	|
 	*/
-	$config['modules_location'] = APPPATH . "modules/";
+	$config['modules_locations'] = array(APPPATH . "modules/");
 
 Functionallity
 -------------

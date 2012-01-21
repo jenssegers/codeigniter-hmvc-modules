@@ -316,16 +316,15 @@ class HMVC_Loader extends CI_Loader {
      *
      * @param	string
      * @param 	boolean
-     * @return	void
      */
     public function add_module($module, $view_cascade = TRUE) {
-        // Mark module as loaded
-        array_unshift($this->_ci_modules, $module);
-        
-        $path = APPPATH . 'modules/' . rtrim($module, '/') . '/';
-        
-        // Add package path
-        return parent::add_package_path($path, $view_cascade);
+        if($path = $this->find_module($module)) {
+            // Mark module as loaded
+            array_unshift($this->_ci_modules, $module);
+            
+            // Add package path
+            parent::add_package_path($path, $view_cascade);
+        }
     }
     
     /**
@@ -345,12 +344,13 @@ class HMVC_Loader extends CI_Loader {
             // Remove package path
             return parent::remove_package_path('', $remove_config);
         } else if (($key = array_search($module, $this->_ci_modules)) !== FALSE) {
-            // Mark module as not loaded
-            unset($this->_ci_modules[$key]);
-            
-            // Remove package path
-            $path = APPPATH . 'modules/' . rtrim($module, '/') . '/';
-            return parent::remove_package_path($path, $remove_config);
+            if($path = $this->find_module($module)) {
+                // Mark module as not loaded
+                unset($this->_ci_modules[$key]);
+                
+                // Remove package path
+                return parent::remove_package_path($path, $remove_config);
+            }
         }
     }
     
@@ -430,10 +430,10 @@ class HMVC_Loader extends CI_Loader {
     }
     
     /**
-     * Detects the module from a string
+     * Detects the module from a string. Returns the module name and class if found.
      * 
      * @param	string
-     * @return	array
+     * @return	array|boolean
      */
     private function detect_module($class) {
         $class = str_replace('.php', '', trim($class, '/'));
@@ -441,10 +441,32 @@ class HMVC_Loader extends CI_Loader {
             $module = substr($class, 0, $first_slash);
             $class = substr($class, $first_slash + 1);
             
-            if (is_dir(APPPATH . 'modules/' . $module)) {
+            // Check if module exists
+            if($this->find_module($module)) {
                 return array($module, $class);
             }
         }
+        
+        return FALSE;
+    }
+    
+    /**
+     * Searches a given module name. Returns the path if found, FALSE otherwise
+     * 
+     * @param string $module
+     * @return string|boolean
+     */
+    private function find_module($module) {
+        $config = & $this->_ci_get_component('config');
+        
+        // Check all locations for this module
+        foreach ($config->item("modules_locations") as $location) {
+            $path = $location . rtrim($module, '/') . '/';
+            if (is_dir($path)) {
+                return $path;
+            }
+        }
+        
         return FALSE;
     }
 }

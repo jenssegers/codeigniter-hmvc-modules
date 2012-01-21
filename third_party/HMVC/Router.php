@@ -48,22 +48,34 @@ class HMVC_Router extends CI_Router {
     function __construct() {
         parent::__construct();
         
+        // Process 'modules_locations' from config
+        $locations = $this->config->item("modules_locations");
+        if (!is_array($locations)) {
+            $locations = array($locations);
+        }
+        
+        // Default modules location if not set
+        if (empty($locations)) {
+            $locations[] = APPPATH . "modules/";
+        }
+        else {
+            // Make sure all paths are the same format
+            foreach ($locations as &$location) {
+                $location = rtrim($location, '/') . '/';
+                if (!stristr($location, FCPATH))
+                    $location = FCPATH . $location;
+                $location = str_replace('\\', '/', $location);
+            }
+        }
+        
+        $this->config->set_item("modules_locations", $locations);
+        
         // Process 'modules_location' from config
-        $modules_location = $this->config->item("modules_location");
+        $modules_location = $this->config->item("modules_locations");
         if (!$modules_location) {
             // Default modules location if not set
             $modules_location = APPPATH . "modules/";
         }
-        
-        $modules_location = rtrim($modules_location, '/') . '/';
-        if (!stristr($modules_location, FCPATH))
-            $modules_location = str_replace('\\', '/', FCPATH . $modules_location);
-        $this->config->set_item("modules_location", $modules_location);
-        
-        // Make path relative to controllers directory
-        $modules_relative = str_replace(str_replace('\\', '/', FCPATH . APPPATH), '../', $modules_location);
-        $modules_relative = str_replace(str_replace('\\', '/', FCPATH), '../../', $modules_relative);
-        $this->config->set_item("modules_location_relative", $modules_relative);
     }
     
     /**
@@ -148,47 +160,53 @@ class HMVC_Router extends CI_Router {
             return $segments;
         }
         
-        // Does a module exist? (/modules/xyz/controllers/)
-        if (is_dir($source = $this->config->item("modules_location") . $module . '/controllers/')) {
-            $this->module = $module;
-            $this->directory = $this->config->item("modules_location_relative") . $module . '/controllers/';
+        foreach ($this->config->item("modules_locations") as $location) {
+            // Make path relative to controllers directory
+            $relative = str_replace(str_replace('\\', '/', FCPATH . APPPATH), '../', $location);
+            $relative = str_replace(str_replace('\\', '/', FCPATH), '../../', $relative);
             
-            // Module root controller?
-            if ($directory && is_file($source . $directory . '.php')) {
-                return array_slice($segments, 1);
-            }
-            
-            // Module sub-directory?
-            if ($directory && is_dir($source . $directory . '/')) {
-                $source = $source . $directory . '/';
-                $this->directory .= $directory . '/';
+            // Does a module exist? (/modules/xyz/controllers/)
+            if (is_dir($source = $location . $module . '/controllers/')) {
+                $this->module = $module;
+                $this->directory = $relative . $module . '/controllers/';
                 
-                // Module sub-directory controller?
-                if (is_file($source . $directory . '.php')) {
+                // Module root controller?
+                if ($directory && is_file($source . $directory . '.php')) {
                     return array_slice($segments, 1);
                 }
                 
-                // Module sub-directory  default controller?
+                // Module sub-directory?
+                if ($directory && is_dir($source . $directory . '/')) {
+                    $source = $source . $directory . '/';
+                    $this->directory .= $directory . '/';
+                    
+                    // Module sub-directory controller?
+                    if (is_file($source . $directory . '.php')) {
+                        return array_slice($segments, 1);
+                    }
+                    
+                    // Module sub-directory  default controller?
+                    if (is_file($source . $this->default_controller . '.php')) {
+                        $segments[1] = $this->default_controller;
+                        return array_slice($segments, 1);
+                    }
+                    
+                    // Module sub-directory sub-controller? 
+                    if ($controller && is_file($source . $controller . '.php')) {
+                        return array_slice($segments, 2);
+                    }
+                }
+                
+                // Module controller?
+                if (is_file($source . $module . '.php')) {
+                    return $segments;
+                }
+                
+                // Module default controller?
                 if (is_file($source . $this->default_controller . '.php')) {
-                    $segments[1] = $this->default_controller;
-                    return array_slice($segments, 1);
+                    $segments[0] = $this->default_controller;
+                    return $segments;
                 }
-                
-                // Module sub-directory sub-controller? 
-                if ($controller && is_file($source . $controller . '.php')) {
-                    return array_slice($segments, 2);
-                }
-            }
-            
-            // Module controller?
-            if (is_file($source . $module . '.php')) {
-                return $segments;
-            }
-            
-            // Module default controller?
-            if (is_file($source . $this->default_controller . '.php')) {
-                $segments[0] = $this->default_controller;
-                return $segments;
             }
         }
     }
