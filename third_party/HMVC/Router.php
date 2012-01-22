@@ -57,25 +57,20 @@ class HMVC_Router extends CI_Router {
         // Default modules location if not set
         if (empty($locations)) {
             $locations[] = APPPATH . "modules/";
-        }
-        else {
+        } else {
             // Make sure all paths are the same format
             foreach ($locations as &$location) {
-                $location = rtrim($location, '/') . '/';
-                if (!stristr($location, FCPATH))
-                    $location = FCPATH . $location;
                 $location = str_replace('\\', '/', $location);
+                $location = rtrim($location, '/') . '/';
+               
+                // Try to detect if the location is relative
+                $root = str_replace('\\', '/', realpath('/'));
+                if (!stristr($location, $root))
+                    $location = str_replace('\\', '/', FCPATH) . $location;
             }
         }
         
         $this->config->set_item("modules_locations", $locations);
-        
-        // Process 'modules_location' from config
-        $modules_location = $this->config->item("modules_locations");
-        if (!$modules_location) {
-            // Default modules location if not set
-            $modules_location = APPPATH . "modules/";
-        }
     }
     
     /**
@@ -162,8 +157,13 @@ class HMVC_Router extends CI_Router {
         
         foreach ($this->config->item("modules_locations") as $location) {
             // Make path relative to controllers directory
-            $relative = str_replace(str_replace('\\', '/', FCPATH . APPPATH), '../', $location);
-            $relative = str_replace(str_replace('\\', '/', FCPATH), '../../', $relative);
+            $start = rtrim(FCPATH . APPPATH, '/');
+            $parts = explode('/', str_replace('\\', '/', $start));
+            $relative = $location;
+            for($i=1; $i<=count($parts); $i++) {
+                $relative = str_replace(implode('/', $parts) . '/', str_repeat('../', $i), $relative);
+                array_pop($parts);
+            }
             
             // Does a module exist? (/modules/xyz/controllers/)
             if (is_dir($source = $location . $module . '/controllers/')) {
