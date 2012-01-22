@@ -152,13 +152,20 @@ class HMVC_Router extends CI_Router {
         }
         
         foreach ($this->config->item("modules_locations") as $location) {
+            $relative = $location;
+            
             // Make path relative to controllers directory
             $start = rtrim(FCPATH . APPPATH, '/');
             $parts = explode('/', str_replace('\\', '/', $start));
-            $relative = $location;
+            
+            // Iterate all parts and replace absolute part with relative part
             for($i=1; $i<=count($parts); $i++) {
-                $relative = str_replace(implode('/', $parts) . '/', str_repeat('../', $i), $relative);
+                $relative = str_replace(implode('/', $parts) . '/', str_repeat('../', $i), $relative, $count);
                 array_pop($parts);
+                
+                // Stop iteration if found
+                if($count)
+                    break;
             }
             
             // Does a module exist? (/modules/xyz/controllers/)
