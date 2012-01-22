@@ -60,13 +60,9 @@ class HMVC_Router extends CI_Router {
         } else {
             // Make sure all paths are the same format
             foreach ($locations as &$location) {
+                $location = realpath($location);
                 $location = str_replace('\\', '/', $location);
                 $location = rtrim($location, '/') . '/';
-               
-                // Try to detect if the location is relative
-                $root = str_replace('\\', '/', realpath('/'));
-                if (!stristr($location, $root))
-                    $location = str_replace('\\', '/', FCPATH) . $location;
             }
         }
         
