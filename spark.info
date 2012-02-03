@@ -23,4 +23,4 @@ compatibility: 2.1.0
 #  spark-2: 1.0.0
 
 # These are tags to associate your spark with
-tags: ["hmvc", "modules", "components", "hierarchical", "packages"]
+tags: ["hmvc", "modules", "modular", "components", "hierarchical", "packages"]
