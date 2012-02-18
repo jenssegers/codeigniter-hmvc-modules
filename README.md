@@ -1,5 +1,5 @@
-Codeigniter HMVC Modules
-=========================================
+CodeIgniter HMVC Modules
+========================
 
 This extension for CodeIgniter enables the use of the Hierarchical Model View Controller(HMVC) pattern and makes your application modular. This allows easy distribution of independent components (MVC) in a single directory across other CodeIgniter applications. All modules are grouped in their own folder and can have their own controller, model, view, library, config, helper and language files.
 
@@ -25,7 +25,7 @@ Next, add the location of your modules directory to the main config.php file:
 	$config['modules_locations'] = array(APPPATH . "modules/");
 
 Functionallity
--------------
+--------------
 
 This is the basic structure of a HMVC module:
 
