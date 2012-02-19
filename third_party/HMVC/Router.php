@@ -105,20 +105,27 @@ class HMVC_Router extends CI_Router {
      * This function matches any routes that may exist in
      * the config/routes.php file against the URI to
      * determine if the class/method need to be remapped.
+     * 
+     * NOTE: The first segment must stay the name of the
+     * module, otherwise it is impossible to detect 
+     * the current module in this method.
      *
      * @access	private
      * @return	void
      */
     function _parse_routes() {
-        $module = $this->uri->segment(0);
-        
         // Apply the current module's routing config
-        if ($module && is_file($this->config->item("modules_location") . $module . '/config/routes.php')) {
-            include ($this->config->item("modules_location") . $module . '/config/routes.php');
-            
-            $route = (!isset($route) or !is_array($route)) ? array() : $route;
-            $this->routes = array_merge($this->routes, $route);
-            unset($route);
+        if ($module = $this->uri->segment(0)) {
+            foreach ($this->config->item("modules_locations") as $location) {
+                echo $location . $module . '/config/routes.php<br>';
+                if (is_file($file = $location . $module . '/config/routes.php')) {
+                    include ($file);
+                    
+                    $route = (!isset($route) or !is_array($route)) ? array() : $route;
+                    $this->routes = array_merge($this->routes, $route);
+                    unset($route);
+                }
+            }
         }
         
         // Let parent do the heavy routing
@@ -134,23 +141,6 @@ class HMVC_Router extends CI_Router {
     function locate($segments) {
         list($module, $directory, $controller) = array_pad($segments, 3, NULL);
         
-        // Root folder controller?
-        if (is_file(APPPATH . 'controllers/' . $module . '.php')) {
-            return $segments;
-        }
-        
-        // Sub-directory controller?
-        if ($directory && is_file(APPPATH . 'controllers/' . $module . '/' . $directory . '.php')) {
-            $this->directory = $module . '/';
-            return array_slice($segments, 1);
-        }
-        
-        // Default controller?
-        if (is_file(APPPATH . 'controllers/' . $module . '/' . $this->default_controller . '.php')) {
-            $segments[0] = $this->default_controller;
-            return $segments;
-        }
-        
         foreach ($this->config->item("modules_locations") as $location) {
             $relative = $location;
             
@@ -159,12 +149,12 @@ class HMVC_Router extends CI_Router {
             $parts = explode('/', str_replace('\\', '/', $start));
             
             // Iterate all parts and replace absolute part with relative part
-            for($i=1; $i<=count($parts); $i++) {
+            for ($i = 1; $i <= count($parts); $i++) {
                 $relative = str_replace(implode('/', $parts) . '/', str_repeat('../', $i), $relative, $count);
                 array_pop($parts);
                 
                 // Stop iteration if found
-                if($count)
+                if ($count)
                     break;
             }
             
@@ -211,6 +201,23 @@ class HMVC_Router extends CI_Router {
                     return $segments;
                 }
             }
+        }
+        
+        // Root folder controller?
+        if (is_file(APPPATH . 'controllers/' . $module . '.php')) {
+            return $segments;
+        }
+        
+        // Sub-directory controller?
+        if ($directory && is_file(APPPATH . 'controllers/' . $module . '/' . $directory . '.php')) {
+            $this->directory = $module . '/';
+            return array_slice($segments, 1);
+        }
+        
+        // Default controller?
+        if (is_file(APPPATH . 'controllers/' . $module . '/' . $this->default_controller . '.php')) {
+            $segments[0] = $this->default_controller;
+            return $segments;
         }
     }
 }
