@@ -64,4 +64,4 @@ Because of the modified router, the module's controllers are accessible like a d
 	
 If the requested module contains a routes.php config file it will automatically be added to the main routes.
 
-To load hierarchical controllers you use the $this->load->controller() method. The argument should be a URI string pointing to the right controller (and method). This function uses the same locating technique as explained above.
+To load hierarchical controllers you use the `$this->load->controller()` method. The argument should be a URI string pointing to the right controller (and method). This function uses the same locating technique as explained above.
