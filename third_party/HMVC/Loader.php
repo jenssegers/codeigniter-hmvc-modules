@@ -3,7 +3,7 @@
  * @name		CodeIgniter HMVC Modules
  * @author		Jens Segers
  * @link		http://www.jenssegers.be
- * @license		MIT License Copyright (c) 2011 Jens Segers
+ * @license		MIT License Copyright (c) 2012 Jens Segers
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -75,7 +75,7 @@ class HMVC_Loader extends CI_Loader {
             $router = & $this->_ci_get_component('router');
             if ($router->module) {
                 $module = $router->module;
-                $uri = $module . "/" . $uri;
+                $uri = $module . '/' . $uri;
             }
         }
         
@@ -399,8 +399,8 @@ class HMVC_Loader extends CI_Loader {
             $class = strtolower($class);
             
             if (!class_exists($class)) {
-                log_message('error', "Non-existent class: " . $name);
-                show_error("Non-existent class: " . $class);
+                log_message('error', 'Non-existent class: ' . $name);
+                show_error('Non-existent class: ' . $class);
             }
             
             // Create a controller object
@@ -411,8 +411,8 @@ class HMVC_Loader extends CI_Loader {
         
         // Method does not exists
         if (!method_exists($controller, $method)) {
-            log_message('error', "Non-existent class method: " . $class . "/" . $method);
-            show_error("Non-existent class method: " . $class . "/" . $method);
+            log_message('error', 'Non-existent class method: ' . $class . '/' . $method);
+            show_error('Non-existent class method: ' . $class . '/' . $method);
         }
         
         // Capture output and return
@@ -459,7 +459,7 @@ class HMVC_Loader extends CI_Loader {
         $config = & $this->_ci_get_component('config');
         
         // Check all locations for this module
-        foreach ($config->item("modules_locations") as $location) {
+        foreach ($config->item('modules_locations') as $location) {
             $path = $location . rtrim($module, '/') . '/';
             if (is_dir($path)) {
                 return $path;

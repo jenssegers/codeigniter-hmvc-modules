@@ -22,7 +22,8 @@ Next, add the location of your modules directory to the main config.php file:
 	| directory.
 	|
 	*/
-	$config['modules_locations'] = array(APPPATH . "modules/");
+	
+	$config['modules_locations'] = array(APPPATH . 'modules/');
 
 Functionallity
 --------------
@@ -44,13 +45,13 @@ From within a module you can load its own resources just like you always do. If 
 		
 		public function index() {
 			// load a model from the current module
-			$this->load->model("local_model");
+			$this->load->model('local_model');
 			
 			// load a model from another module
-			$this->load->model("other_module/model");
+			$this->load->model('other_module/model');
 
 			// HMVC example
-			$this->load->controller("module/controller/method");
+			$this->load->controller('module/controller/method');
 		}
 	}
 	

@@ -3,7 +3,7 @@
  * @name		CodeIgniter HMVC Modules
  * @author		Jens Segers
  * @link		http://www.jenssegers.be
- * @license		MIT License Copyright (c) 2011 Jens Segers
+ * @license		MIT License Copyright (c) 2012 Jens Segers
  * 
  * Inspired by wiredesignz's HMVC Router.
  * https://bitbucket.org/wiredesignz/codeigniter-modular-extensions-hmvc/
@@ -49,14 +49,14 @@ class HMVC_Router extends CI_Router {
         parent::__construct();
         
         // Process 'modules_locations' from config
-        $locations = $this->config->item("modules_locations");
+        $locations = $this->config->item('modules_locations');
         if (!is_array($locations)) {
             $locations = array($locations);
         }
         
         // Default modules location if not set
         if (empty($locations)) {
-            $locations[] = APPPATH . "modules/";
+            $locations[] = APPPATH . 'modules/';
         } else {
             // Make sure all paths are the same format
             foreach ($locations as &$location) {
@@ -66,7 +66,7 @@ class HMVC_Router extends CI_Router {
             }
         }
         
-        $this->config->set_item("modules_locations", $locations);
+        $this->config->set_item('modules_locations', $locations);
     }
     
     /**
@@ -116,8 +116,7 @@ class HMVC_Router extends CI_Router {
     function _parse_routes() {
         // Apply the current module's routing config
         if ($module = $this->uri->segment(0)) {
-            foreach ($this->config->item("modules_locations") as $location) {
-                echo $location . $module . '/config/routes.php<br>';
+            foreach ($this->config->item('modules_locations') as $location) {
                 if (is_file($file = $location . $module . '/config/routes.php')) {
                     include ($file);
                     
@@ -141,7 +140,7 @@ class HMVC_Router extends CI_Router {
     function locate($segments) {
         list($module, $directory, $controller) = array_pad($segments, 3, NULL);
         
-        foreach ($this->config->item("modules_locations") as $location) {
+        foreach ($this->config->item('modules_locations') as $location) {
             $relative = $location;
             
             // Make path relative to controllers directory
