@@ -116,11 +116,7 @@ class HMVC_Router extends CI_Router {
     function _parse_routes() {
         // Apply the current module's routing config
         if ($module = $this->uri->segment(0)) {
-<<<<<<< HEAD
             foreach ($this->config->item('modules_locations') as $location) {
-=======
-            foreach ($this->config->item("modules_locations") as $location) {
->>>>>>> 45cedd33b433dab2c6d7e35d337858776c114a42
                 if (is_file($file = $location . $module . '/config/routes.php')) {
                     include ($file);
                     
