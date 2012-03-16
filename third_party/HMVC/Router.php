@@ -50,20 +50,18 @@ class HMVC_Router extends CI_Router {
         
         // Process 'modules_locations' from config
         $locations = $this->config->item('modules_locations');
-        if (!is_array($locations)) {
+        
+        if (!$locations) {
+            $locations = array(APPPATH . 'modules/');
+        } else if (!is_array($locations)) {
             $locations = array($locations);
         }
         
-        // Default modules location if not set
-        if (empty($locations)) {
-            $locations[] = APPPATH . 'modules/';
-        } else {
-            // Make sure all paths are the same format
-            foreach ($locations as &$location) {
-                $location = realpath($location);
-                $location = str_replace('\\', '/', $location);
-                $location = rtrim($location, '/') . '/';
-            }
+        // Make sure all paths are the same format
+        foreach ($locations as &$location) {
+            $location = realpath($location);
+            $location = str_replace('\\', '/', $location);
+            $location = rtrim($location, '/') . '/';
         }
         
         $this->config->set_item('modules_locations', $locations);
@@ -164,6 +162,7 @@ class HMVC_Router extends CI_Router {
                 
                 // Module root controller?
                 if ($directory && is_file($source . $directory . '.php')) {
+                    $this->class = $directory;
                     return array_slice($segments, 1);
                 }
                 
@@ -218,5 +217,28 @@ class HMVC_Router extends CI_Router {
             $segments[0] = $this->default_controller;
             return $segments;
         }
+    }
+    
+    /**
+     * Set the module name
+     *
+     * @param	string
+     * @return	void
+     */
+    function set_module($module) {
+        $this->module = $module;
+    }
+    
+    // --------------------------------------------------------------------
+    
+
+    /**
+     * Fetch the module
+     *
+     * @access	public
+     * @return	string
+     */
+    function fetch_module() {
+        return $this->module;
     }
 }

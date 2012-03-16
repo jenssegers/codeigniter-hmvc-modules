@@ -51,7 +51,7 @@ From within a module you can load its own resources just like you always do. If 
             $this->load->model('other_module/model');
 
             // HMVC example
-            $this->load->controller('module/controller/method');
+            $this->load->controller('module/controller/method', $params = array(), $return = FALSE);
         }
     }
     
@@ -65,4 +65,31 @@ Because of the modified router, the module's controllers are accessible like a d
     
 If the requested module contains a routes.php config file it will automatically be added to the main routes.
 
-To load hierarchical controllers you use the `$this->load->controller()` method. The argument should be a URI string pointing to the right controller (and method). This function uses the same locating technique as explained above.
+Hierarchical controllers
+------------------------
+
+To load hierarchical controllers you use the `$this->load->controller()` method. This method works similar to loading views with CodeIgniter, this method accepts the following parameters:
+
+ - URI: a URI string pointing to the requested controller (and method). This function uses the same locating technique as explained above.
+ - Parameters: an array containing the arguments for the requested method.
+ - Return : a boolean indicating whether the output should be returned or show on the screen (default).
+ 
+For example, this is our main controller where we pass the request to a sub-controller in the same module:
+ 
+    class Specials extends MY_Controller {
+        
+        public function index() {
+            $this->load->controller('blogs/random', array('specials'));
+        }
+        
+    }
+    
+And the sub-controller contains the real method:
+
+    class Blogs extends MY_Controller {
+    
+        public function random($type) {
+            ...
+        }
+        
+    }

@@ -44,7 +44,7 @@ class HMVC_Loader extends CI_Loader {
      * @access protected
      */
     protected $_ci_controllers = array();
-     
+    
     /**
      * Constructor
      *
@@ -66,9 +66,11 @@ class HMVC_Loader extends CI_Loader {
      * This function lets users load and hierarchical controllers to enable HMVC support
      *
      * @param	string	the uri to the controller
+     * @param	array	parameters for the requested method
+     * @param	boolean return the result instead of showing it
      * @return	void
      */
-    public function controller($uri) {
+    public function controller($uri, $params = array(), $return = FALSE) {
         // No valid module detected, add current module to uri
         list($module) = $this->detect_module($uri);
         if (!isset($module)) {
@@ -79,8 +81,7 @@ class HMVC_Loader extends CI_Loader {
             }
         }
         
-        $params = func_get_args();
-        return $this->_load_controller($uri, array_slice($params, 1));
+        return $this->_load_controller($uri, $params, $return);
     }
     
     /**
@@ -318,7 +319,7 @@ class HMVC_Loader extends CI_Loader {
      * @param 	boolean
      */
     public function add_module($module, $view_cascade = TRUE) {
-        if($path = $this->find_module($module)) {
+        if ($path = $this->find_module($module)) {
             // Mark module as loaded
             array_unshift($this->_ci_modules, $module);
             
@@ -343,7 +344,7 @@ class HMVC_Loader extends CI_Loader {
             // Remove package path
             parent::remove_package_path('', $remove_config);
         } else if (($key = array_search($module, $this->_ci_modules)) !== FALSE) {
-            if($path = $this->find_module($module)) {
+            if ($path = $this->find_module($module)) {
                 // Mark module as not loaded
                 unset($this->_ci_modules[$key]);
                 
@@ -360,72 +361,74 @@ class HMVC_Loader extends CI_Loader {
      *
      * @param	string
      * @param	array
+     * @param	boolean
      * @return	object
      */
-    private function _load_controller($uri = '', $params = array()) {
+    private function _load_controller($uri = '', $params = array(), $return = FALSE) {
         $router = & $this->_ci_get_component('router');
         
-        // Back up current router values
-        $directory = $router->directory;
-        $module = $router->module;
+        // Back up current router values (before loading new controller)
+        $backup = array();
+        foreach (array('directory', 'class', 'method', 'module') as $prop) {
+            $backup[$prop] = $router->{$prop};
+        }
         
         // Locate the controller
         $segments = $router->locate(explode('/', $uri));
-        
         $class = isset($segments[0]) ? $segments[0] : FALSE;
+        $method = isset($segments[1]) ? $segments[1] : "index";
         
         // Controller not found
         if (!$class) {
             return;
         }
         
-        // Default method if no method is found
-        $method = isset($segments[1]) ? $segments[1] : "index";
-        
-        if(!array_key_exists(strtolower($class), $this->_ci_controllers)) {
+        if (!array_key_exists(strtolower($class), $this->_ci_controllers)) {
             // Determine filepath
-            if ($router->module) {
-                $filepath = APPPATH . 'controllers/' . $router->fetch_directory() . $class . '.php';
-            } else {
-                $filepath = APPPATH . 'controllers/' . $class . '.php';
-            }
+            $filepath = APPPATH . 'controllers/' . $router->fetch_directory() . $class . '.php';
             
             // Load the controller file
             if (file_exists($filepath)) {
                 include_once ($filepath);
             }
             
-            $name = ucfirst($class);
-            $class = strtolower($class);
-            
+            // Controller class not found, show 404
             if (!class_exists($class)) {
-                log_message('error', 'Non-existent class: ' . $name);
-                show_error('Non-existent class: ' . $class);
+                show_404("{$class}/{$method}");
             }
             
             // Create a controller object
-            $this->_ci_controllers[$class] = new $name();
+            $this->_ci_controllers[strtolower($class)] = new $class();
         }
         
-        $controller = $this->_ci_controllers[$class];
+        $controller = $this->_ci_controllers[strtolower($class)];
         
         // Method does not exists
         if (!method_exists($controller, $method)) {
-            log_message('error', 'Non-existent class method: ' . $class . '/' . $method);
-            show_error('Non-existent class method: ' . $class . '/' . $method);
+            show_404("{$class}/{$method}");
+        }
+        
+        // Restore router state
+        foreach ($backup as $prop => $value) {
+            $router->{$prop} = $value;
         }
         
         // Capture output and return
         ob_start();
-        $output = call_user_func_array(array($controller, $method), $params);
-        $buffer = ob_get_clean();
+        $result = call_user_func_array(array($controller, $method), $params);
         
-        // Restore router state
-        $router->directory = $directory;
-        $router->module = $module;
+        // Return the buffered output
+        if ($return === TRUE) {
+            $buffer = ob_get_contents();
+            @ob_end_clean();
+            return $buffer;
+        }
         
-        // Return output
-        return ($output !== NULL) ? $output : $buffer;
+        // Close buffer and flush output to screen
+        ob_end_flush();
+        
+        // Return controller return value
+        return $result;
     }
     
     /**
@@ -441,7 +444,7 @@ class HMVC_Loader extends CI_Loader {
             $class = substr($class, $first_slash + 1);
             
             // Check if module exists
-            if($this->find_module($module)) {
+            if ($this->find_module($module)) {
                 return array($module, $class);
             }
         }
