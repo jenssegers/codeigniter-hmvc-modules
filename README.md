@@ -41,7 +41,7 @@ This is the basic structure of a HMVC module:
            
 From within a module you can load its own resources just like you always do. If on the other hand, you want to load resources from another module you can do this by adding the module's name like a directory structure:
 
-    class Hello extends MY_Controller {
+    class Hello extends CI_Controller {
         
         public function index() {
             // load a model from the current module
@@ -76,7 +76,7 @@ To load hierarchical controllers you use the `$this->load->controller()` method.
  
 For example, this is our main controller where we pass the request to a sub-controller in the same module:
  
-    class Specials extends MY_Controller {
+    class Specials extends CI_Controller {
         
         public function index() {
             $this->load->controller('blogs/random', array('specials'));
@@ -86,7 +86,7 @@ For example, this is our main controller where we pass the request to a sub-cont
     
 And the sub-controller contains the real method:
 
-    class Blogs extends MY_Controller {
+    class Blogs extends CI_Controller {
     
         public function random($type) {
             ...
