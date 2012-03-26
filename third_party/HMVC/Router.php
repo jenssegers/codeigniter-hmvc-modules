@@ -142,7 +142,7 @@ class HMVC_Router extends CI_Router {
             $relative = $location;
             
             // Make path relative to controllers directory
-            $start = rtrim(FCPATH . APPPATH, '/');
+            $start = rtrim(realpath(FCPATH . APPPATH), '/');
             $parts = explode('/', str_replace('\\', '/', $start));
             
             // Iterate all parts and replace absolute part with relative part
