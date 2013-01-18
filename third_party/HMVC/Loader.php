@@ -80,8 +80,17 @@ class HMVC_Loader extends CI_Loader {
                 $uri = $module . '/' . $uri;
             }
         }
+
+        // Add module
+        $this->add_module($module);
         
-        return $this->_load_controller($uri, $params, $return);
+        // Execute the controller method and capture output
+        $void = $this->_load_controller($uri, $params, $return);
+
+        // Remove module
+        $this->remove_module();
+
+        return $void;
     }
     
     /**
