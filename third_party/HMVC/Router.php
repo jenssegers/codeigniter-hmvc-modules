@@ -46,7 +46,8 @@ class HMVC_Router extends CI_Router {
      * Runs the route mapping function.
      */
     function __construct() {
-        parent::__construct();
+        
+        $this->config =& load_class('Config', 'core');
         
         // Process 'modules_locations' from config
         $locations = $this->config->item('modules_locations');
@@ -65,6 +66,9 @@ class HMVC_Router extends CI_Router {
         }
         
         $this->config->set_item('modules_locations', $locations);
+        
+        
+        parent::__construct();
     }
     
     /**
