@@ -8,6 +8,8 @@
  * @author      hArpanet
  * @link        http://harpanet.com
  *              Updated for CI 3.0-dev.
+ *              Added _set_default_controller() to allow default_controller
+ *              (specified in config/routes.php) to reside in a module of the same name.
  *
  * Inspired by wiredesignz's HMVC Router.
  * https://bitbucket.org/wiredesignz/codeigniter-modular-extensions-hmvc/
@@ -242,6 +244,42 @@ class HMVC_Router extends CI_Router {
      */
     function set_module($module) {
         $this->module = $module;
+    }
+
+    /**
+     * Set default controller
+     *
+     * First we check in normal APPPATH/controller's location,
+     * then in Modules named after the default_controller
+     * @author  hArpanet - based on system/core/Router.php
+     *
+     * @return  void
+     */
+    protected function _set_default_controller()
+    {
+        // controller in APPPATH/controllers takes priority over module with same name
+        parent::_set_default_controller();
+
+        // see if parent found a controller
+        $class = $this->fetch_class();
+
+        if (empty($class)) {
+
+            // no 'normal' controller found,
+            // get the class/method from the default_controller route
+            if (sscanf($this->default_controller, '%[^/]/%s', $class, $method) !== 2)
+            {
+                $method = 'index';
+            }
+
+            // try to locate default controller in modules
+            if ($located = $this->locate(array($class, $class, $method))) {
+
+                log_message('debug', 'No URI present. Default module controller set.');
+            }
+        }
+
+        // Nothing found - this will trigger 404 later
     }
 
     // --------------------------------------------------------------------
