@@ -153,6 +153,8 @@ class HMVC_Router extends CI_Router {
         // anon function to ucfirst a string if CI ver > 2 (for backwards compatibility)
         $_ucfirst = function($cn) {return (intval(substr(CI_VERSION,0,1)) > 2) ? ucfirst($cn) : $cn;};
 
+        $segments[0] = $this->translate_uri_dashes === TRUE ? str_replace('-', '_', $segments[0]) : $segments[0];
+
         list($module, $directory, $controller) = array_pad($segments, 3, NULL);
 
         foreach ($this->config->item('modules_locations') as $location) {
