@@ -6,7 +6,7 @@ This extension for CodeIgniter enables the use of the Hierarchical Model View Co
 Installation
 ------------
 
-Download the file from github and pace them into their corresponding folders in the application directory.
+Download the file from github and place them into their corresponding folders in the application directory.
 
 _Note: to use the HMVC functionality, make sure the Controller and Router you use extend their HMVC class._
 
